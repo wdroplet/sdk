@@ -25,8 +25,8 @@ class DIDModule {
    */
   new(did, controller, public_key) {
     // Controller and did should be valid Dock DIDs
-    DIDModule.isValidDockDIDIdentifier(did);
-    DIDModule.isValidDockDIDIdentifier(controller);
+    DIDModule.validateDockDIDIdentifier(did);
+    DIDModule.validateDockDIDIdentifier(controller);
     return this.module.new(did, {
       controller,
       public_key,
@@ -36,13 +36,16 @@ class DIDModule {
   /**
    * Updates the details of an already registered DID on the Dock chain.
    * @param {string} did - DID
-   * @param {string} controller - The new key's controller
-   * @param {PublicKey} public_key -The new public key
    * @param {Signature} signature - Signature from existing key
+   * @param {PublicKey} public_key -The new public key
+   * @param {optional string} controller - The new key's controller
    * @return {Extrinsic} The extrinsic to sign and send.
    */
-  updateKey(did, controller, public_key, signature) {
-    DIDModule.isValidDockDIDIdentifier(did);
+  updateKey(did, signature, public_key, controller) {
+    DIDModule.validateDockDIDIdentifier(did);
+    if (controller) {
+      DIDModule.validateDockDIDIdentifier(controller);
+    }
     const keyUpdate = {
       did,
       controller,
@@ -60,7 +63,7 @@ class DIDModule {
    * @return {Extrinsic} The extrinsic to sign and send.
    */
   remove(did, signature) {
-    DIDModule.isValidDockDIDIdentifier(did);
+    DIDModule.validateDockDIDIdentifier(did);
     return this.module.remove({
       did,
       last_modified_in_block: 0,
@@ -70,9 +73,9 @@ class DIDModule {
   /**
    * Gets a DID from the Dock chain and create a DID document according to W3C spec.
    * @param {string} did - DID
-   * @return {object} The DID.
+   * @return {object} The DID document.
    */
-  async getDIDDoc(did) {
+  async getDocument(did) {
     // TODO: Convert DID and pk to base58
     const resp = await this.api.query.didModule.dids(did);
     if (resp) {
@@ -118,7 +121,12 @@ class DIDModule {
     }
   }
 
-  static isValidDockDIDIdentifier(did) {
+  /**
+   * Check if the given identifier is 32 byte hex
+   * @param {identifier} identifier - The identifier to check.
+   * @return {null} Throws exception if invalid identifier
+   */
+  static validateDockDIDIdentifier(did) {
     if (!isHexWithGivenByteSize(did, DockDIDByteSize)) {
       throw `DID identifier must be ${DockDIDByteSize} bytes`;
     }
