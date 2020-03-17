@@ -12,7 +12,7 @@ async function onDIDCreated() {
   console.log('Transaction finalized.');
 
   // Check if DID exists
-  const result = await dock.did.get(didIdentifier);
+  const result = await dock.did.getDIDDoc(didIdentifier);
   console.log('DID:', result);
   process.exit();
 }

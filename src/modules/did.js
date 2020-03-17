@@ -1,4 +1,8 @@
 const DockDIDQualifier = 'did:dock';
+// Byte size of the Dock DID identifier, i.e. the `DockDIDQualifier` is not counted.
+const DockDIDByteSize = 32;
+
+import {isHexWithGivenByteSize} from './utils';
 
 /** Class to create, update and destroy DIDs */
 class DIDModule {
@@ -14,12 +18,15 @@ class DIDModule {
 
   /**
    * Creates a new DID on the Dock chain.
-   * @param {string} did - DID
-   * @param {string} controller - DID Controller
-   * @param {PublicKey} public_key - DID Creator Public Key
+   * @param {string} did - The new DID
+   * @param {string} controller - The DID of the public key's controller
+   * @param {PublicKey} public_key - A public key associated with the DID
    * @return {Extrinsic} The extrinsic to sign and send.
    */
   new(did, controller, public_key) {
+    // Controller and did should be valid Dock DIDs
+    DIDModule.isValidDockDIDIdentifier(did);
+    DIDModule.isValidDockDIDIdentifier(controller);
     return this.module.new(did, {
       controller,
       public_key,
@@ -35,6 +42,7 @@ class DIDModule {
    * @return {Extrinsic} The extrinsic to sign and send.
    */
   updateKey(did, controller, public_key, signature) {
+    DIDModule.isValidDockDIDIdentifier(did);
     const keyUpdate = {
       did,
       controller,
@@ -52,6 +60,7 @@ class DIDModule {
    * @return {Extrinsic} The extrinsic to sign and send.
    */
   remove(did, signature) {
+    DIDModule.isValidDockDIDIdentifier(did);
     return this.module.remove({
       did,
       last_modified_in_block: 0,
@@ -63,7 +72,7 @@ class DIDModule {
    * @param {string} did - DID
    * @return {object} The DID.
    */
-  async get(did) {
+  async getDIDDoc(did) {
     // TODO: Convert DID and pk to base58
     const resp = await this.api.query.didModule.dids(did);
     if (resp) {
@@ -106,6 +115,12 @@ class DIDModule {
       }
     } else {
       throw 'Got null response';
+    }
+  }
+
+  static isValidDockDIDIdentifier(did) {
+    if (!isHexWithGivenByteSize(did, DockDIDByteSize)) {
+      throw `DID identifier must be ${DockDIDByteSize} bytes`;
     }
   }
 }
