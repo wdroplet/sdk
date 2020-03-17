@@ -25,12 +25,18 @@ class DIDModule {
    */
   new(did, controller, public_key) {
     // Controller and did should be valid Dock DIDs
-    DIDModule.validateDockDIDIdentifier(did);
-    DIDModule.validateDockDIDIdentifier(controller);
-    return this.module.new(did, {
-      controller,
-      public_key: public_key.toJSON(),
-    });
+    // DIDModule.validateDockDIDIdentifier(did);
+    // DIDModule.validateDockDIDIdentifier(controller);
+    // return this.module.new(did, {
+    //   controller,
+    //   public_key: public_key.toJSON(),
+    // });
+    DIDModule.validateDockDIDIdentifier(did).
+      then(DIDModule.validateDockDIDIdentifier(controller)).
+      then(this.module.new(did, {
+        controller,
+        public_key: public_key.toJSON(),
+      }));
   }
 
   /**
@@ -127,9 +133,16 @@ class DIDModule {
    * @return {null} Throws exception if invalid identifier
    */
   static validateDockDIDIdentifier(did) {
-    if (!isHexWithGivenByteSize(did, DockDIDByteSize)) {
-      throw `DID identifier must be ${DockDIDByteSize} bytes`;
-    }
+    // if (!isHexWithGivenByteSize(did, DockDIDByteSize)) {
+    //   throw `DID identifier must be ${DockDIDByteSize} bytes`;
+    // }
+    return new Promise(function(resolve, reject) {
+      if (!isHexWithGivenByteSize(did, DockDIDByteSize)) {
+        reject(`DID identifier must be ${DockDIDByteSize} bytes`);
+      } else {
+        resolve();
+      }
+    });
   }
 }
 
