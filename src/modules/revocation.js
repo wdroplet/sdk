@@ -18,7 +18,7 @@ class RevocationModule {
    */
   newRegistry(id, registry) {
     // console.log('new revocation', id, registry.toJSON());
-    return this.module.newRegistry(id, registry);
+    return this.module.newRegistry(id, registry.toJSON());
   }
 
   /**
