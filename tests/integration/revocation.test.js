@@ -142,8 +142,8 @@ describe('Revocation Module', () => {
 
     const transaction = dock.revocation.newRegistry(registryID, registry);
     const result = await dock.sendTransaction(transaction);
-    if (result) {
-      expect(!!result).toBe(true);
-    }
+    expect(!!result).toBe(true);
+    const reg = await dock.revocation.getRevocationRegistry(registryID);
+    expect(!!reg).toBe(true);
   }, 30000);
 });
