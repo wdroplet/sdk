@@ -84,22 +84,36 @@ describe('Revocation Module', () => {
     const registryID = randomAsHex(32);
     const controllerID = randomAsHex(32);
 
-    const testdid = dock.api.createType('dock::did::Did', controllerID);
-    const treeRegistry = testdid.registry;
-    console.log('treeRegistry', treeRegistry)
-    // console.log('testdid', testdid)
+    /*const ctrlSet = new BTreeSet();
+    ctrlSet.add(dock.api.createType('dock::did::Did', controllerID));
+    const policy = new Policy(ctrlSet);
+    const registry = new RevokeRegistry(policy, false);
+    console.log('registry', registry);*/
 
-    const controllerSet = new Set();
-    controllerSet.add(testdid);
-
-    const Did = createClass(treeRegistry, 'dock::did::Did');
-
-    const treeSet = new BTreeSet(treeRegistry, Did, controllerSet);
-
-    const policy = new Policy(treeSet);
+    //const typeReg = new TypeRegistry();
+    const didType = createClass(dock.api.registry, 'dock::did::Did');
+    const s = new Set();
+    s.add(dock.api.createType('dock::did::Did', controllerID));
+    const ctrlSet = new BTreeSet(dock.api.registry, didType, s);
+    const policy = new Policy(ctrlSet);
     const registry = new RevokeRegistry(policy, false);
 
-    console.log('treeSet', treeSet)
+    /*const testdid = dock.api.createType('dock::did:Did', controllerID);
+    const treeRegistry = testdid.registry;
+    console.log('treeRegistry', treeRegistry);
+    console.log('testdid', testdid);*/
+
+    // const controllerSet = new Set();
+    // controllerSet.add(testdid);
+
+    /*const Did = createClass(treeRegistry, 'dock::did:Did');
+
+    const treeSet = new BTreeSet(treeRegistry, Did, controllerSet);*/
+
+    //const policy = new Policy(treeSet);
+    //const registry = new RevokeRegistry(policy, false);
+
+    //console.log('treeSet', treeSet);
 
     // creating the types this way doesnt seem to work either, similar error
     // const policyTest = dock.api.createType('dock::revoke::Policy', {
@@ -118,7 +132,7 @@ describe('Revocation Module', () => {
     //   add_only: false }
     // tried using array of strings for controllersm, still same error
 
-    console.log('registry', registry.toJSON())
+    console.log('registry', registry.toJSON());
 
     const transaction = dock.revocation.newRegistry(registryID, registry);
     const result = await dock.sendTransaction(transaction);
