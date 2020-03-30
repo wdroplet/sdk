@@ -59,9 +59,7 @@ class Policy {
 
   toJSON() {
     return {
-      OneOf: {
-        controllers: this.treeSet
-      }
+      OneOf: this.treeSet
     };
   }
 }
@@ -78,6 +76,14 @@ describe('Revocation Module', () => {
   test('Can connect to node', () => {
     //await dock.init();
     expect(!!dock.api).toBe(true);
+  });
+
+  test('Has keyring and account', () => {
+    dock.keyring = new Keyring(TestKeyringOpts);
+    const account = dock.keyring.addFromUri(TestAccount.uri, TestAccount.options);
+    dock.setAccount(account);
+    expect(!!dock.keyring).toBe(true);
+    expect(!!dock.account).toBe(true);
   });
 
   test('Can create a registry', async () => {
