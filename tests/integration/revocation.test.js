@@ -28,12 +28,22 @@ describe('Revocation Module', () => {
   beforeAll(async (done) => {
     await dock.init();
     done();
+  });
 
-    // The keyring should be initialized before any test begins as this suite is testing revocation
+  test('Can connect to node', () => {
+    //await dock.init();
+    expect(!!dock.api).toBe(true);
+  });
+
+  test('Has keyring and account', () => {
     dock.keyring = new Keyring(TestKeyringOpts);
     const account = dock.keyring.addFromUri(TestAccount.uri, TestAccount.options);
     dock.setAccount(account);
+    expect(!!dock.keyring).toBe(true);
+    expect(!!dock.account).toBe(true);
+  });
 
+  test('Create a DID', async () => {
     // The DID should be written before any test begins
     const pair = dock.keyring.addFromUri(controllerSeed, null, 'sr25519');
     const publicKey = PublicKeySr25519.fromKeyringPair(pair);
@@ -42,8 +52,9 @@ describe('Revocation Module', () => {
     const keyDetail = createKeyDetail(publicKey, controllerDID);
 
     const transaction = dock.did.new(controllerDID, keyDetail);
-    await dock.sendTransaction(transaction);
-  });
+    const result = await dock.sendTransaction(transaction);
+    expect(!!result).toBe(true);
+  }, 3000);
 
   test('Can create a registry', async () => {
     const controllers = new Set();
