@@ -1,9 +1,8 @@
 import { randomAsHex, encodeAddress } from '@polkadot/util-crypto';
 import { validate } from 'jsonschema';
-import axios from 'axios';
 
 import JSONSchema07 from '../utils/vc/schemas/schema-draft-07';
-import { getSignatureFromKeyringPair } from '../utils/misc';
+import { fetchJSONFromUrl, getSignatureFromKeyringPair } from '../utils/misc';
 import Signature from '../signatures/signature';
 
 
@@ -148,19 +147,53 @@ export default class Schema {
         // Return stored JSON schema
         return JSONSchema07;
       }
-      // Fetch the URI and expect a JSON response
-      const { data: doc } = await axios.get(schemaUrl);
-      if (typeof doc === 'object') {
-        return doc;
-      }
-      // If MIME type did not indicate JSON, try to parse the response as JSON
-      try {
-        return JSON.parse(doc);
-      } catch (e) {
-        throw new Error('Cannot parse response as JSON');
-      }
+      return fetchJSONFromUrl(schemaUrl);
     } else {
       throw new Error(`${schemaKey} not found in the given JSON`);
     }
+  }
+
+  /**
+   * Get schema using HTTP or from chain using given API
+   * @param schemaId
+   * @param schemaAPI
+   */
+  static async resolveSchema(schemaId, schemaAPI) {
+    try {
+      // Check if the schemaId is a URL
+      const url = new URL(schemaId);
+    } catch (e) {
+      // Get schema from Dock
+      if (!schemaId.startsWith(BlobQualifier)) {
+        throw new Error(`Schema id should begin with ${BlobQualifier}`);
+      }
+      if (!schemaAPI.dock) {
+        throw new Error('Only Dock schema support is present as of now.');
+      }
+      const dockAPI = schemaAPI.dock;
+      const schema = await Schema.getSchema(schemaId, dockAPI);
+      // TODO:
+    }
+    return fetchJSONFromUrl(schemaId);
+  }
+
+  /**
+   * Takes a validator and a schema and adds the schema and the schemas it depends to the validator
+   * @param validator
+   * @param initialSchema
+   * @param schemaAPI
+   * @returns {Promise<void>}
+   */
+  static async updateSchemaValidatorWithSchemas(validator, initialSchema, schemaAPI) {
+    validator.addSchema(initialSchema);
+    async function importNextSchema() {
+      const nextSchemaId = validator.unresolvedRefs.shift();
+      console.log('next nextSchemaId', nextSchemaId);
+      if (!nextSchemaId) { return; }
+      const nextSchema = await Schema.resolveSchema(nextSchemaId, schemaAPI);
+      validator.addSchema(nextSchema);
+      await importNextSchema();
+    }
+    await importNextSchema();
   }
 }

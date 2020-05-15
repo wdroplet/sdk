@@ -1,5 +1,7 @@
+import { Validator } from 'jsonschema';
+
 import Schema from '../src/modules/schema';
-import { validateCredentialSchema } from '../src/utils/vc';
+import { validateCredentialSchema, validateCredSchemaWithGivenValidator } from '../src/utils/vc';
 
 import bolSchema from '../src/utils/vc/schemas/bol';
 import prCardSchema from '../src/utils/vc/schemas/pr_card';
@@ -278,29 +280,31 @@ const noInfectionCred = {
 
 async function main() {
   await Schema.validateSchema(bolSchema);
-  validateCredentialSchema(bolCred, bolSchema);
+  await validateCredentialSchema(bolCred, bolSchema);
 
   await Schema.validateSchema(prCardSchema);
-  validateCredentialSchema(credPRCard, prCardSchema);
+  await validateCredentialSchema(credPRCard, prCardSchema);
 
   await Schema.validateSchema(qpInbonSchema);
-  validateCredentialSchema(qPInbondCred, qpInbonSchema);
+  await validateCredentialSchema(qPInbondCred, qpInbonSchema);
 
   await Schema.validateSchema(healthWorkerPassportSchema);
-  validateCredentialSchema(healthCareWorkerCred, healthWorkerPassportSchema);
+  await validateCredentialSchema(healthCareWorkerCred, healthWorkerPassportSchema);
 
   await Schema.validateSchema(proofOfHealthCoreSchema);
-  validateCredentialSchema(proofOfHealthCoreCred, proofOfHealthCoreSchema);
+  await validateCredentialSchema(proofOfHealthCoreCred, proofOfHealthCoreSchema);
 
-  // Following 3 require change in validator
+  const validator = new Validator();
+  validator.addSchema(proofOfHealthCoreSchema, 'blob:dock:0x123');
+
   await Schema.validateSchema(infectionDiagnosisSchema);
-  validateCredentialSchema(infectionDiagnosisCred, infectionDiagnosisSchema);
+  validateCredSchemaWithGivenValidator(validator, infectionDiagnosisCred, infectionDiagnosisSchema);
 
-  await Schema.validateSchema(immunityEventRecordSchema);
-  validateCredentialSchema(immunityEventRecordCred, immunityEventRecordSchema);
-
-  await Schema.validateSchema(noInfectionSchema);
-  validateCredentialSchema(noInfectionCred, noInfectionSchema);
+  // await Schema.validateSchema(immunityEventRecordSchema);
+  // validateCredSchemaWithGivenValidator(validator, immunityEventRecordCred, immunityEventRecordSchema);
+  //
+  // await Schema.validateSchema(noInfectionSchema);
+  // validateCredSchemaWithGivenValidator(validator, noInfectionCred, noInfectionSchema);
 }
 
 main().catch((error) => {

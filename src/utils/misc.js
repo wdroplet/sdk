@@ -6,6 +6,7 @@ import {
 import {
   Signature, SignatureEd25519, SignatureSecp256k1, SignatureSr25519, // eslint-disable-line
 } from '../signatures';
+import axios from 'axios';
 
 const secp256k1Curve = new EC('secp256k1');
 
@@ -106,4 +107,22 @@ export function getUniqueElementsFromArray(a, filterCallback) {
     const k = filterCallback(item);
     return seen.has(k) ? false : seen.add(k);
   });
+}
+
+/**
+ * Fetch the HTTP(S) URL expecting a JSON response and return the JSON. Throw error otherwise
+ * @param {string} url - The HTTP(S) URL to get
+ * @returns {Promise<object>} - The JSON response
+ */
+export async function fetchJSONFromUrl(url) {
+  const { data: doc } = await axios.get(url);
+  if (typeof doc === 'object') {
+    return doc;
+  }
+  // If MIME type did not indicate JSON, try to parse the response as JSON
+  try {
+    return JSON.parse(doc);
+  } catch (e) {
+    throw new Error('Cannot parse response as JSON');
+  }
 }

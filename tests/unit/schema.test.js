@@ -1,6 +1,7 @@
 import { cryptoWaitReady } from '@polkadot/util-crypto';
 import { Keyring } from '@polkadot/api';
 import { hexToU8a } from '@polkadot/util';
+import { Validator } from 'jsonschema';
 
 import VerifiableCredential from '../../src/verifiable-credential';
 import Schema, { BlobQualifier, EncodedIDByteSize } from '../../src/modules/schema';
@@ -11,7 +12,7 @@ import {
 } from '../../src/utils/misc';
 
 import {
-  validateCredentialSchema,
+  validateCredSchemaWithGivenValidator,
   verifyCredential,
 } from '../../src/utils/vc';
 
@@ -88,9 +89,10 @@ describe('VerifiableCredential Tests', () => {
   });
 
   test('VerifiableCredential\'s validateSchema should validate the credentialSubject with given JSON schema.', async () => {
-    await expect(vc.validateSchema(exampleAlumniSchema)).toBe(true);
+    await expect(() => vc.validateSchema(exampleAlumniSchema)).not.toThrow();
   });
 
+  // This test will fail since schema validation is not done in credential
   test('Utility method verifyCredential should check if schema is incompatible with the credentialSubject.', async () => {
     const vcInvalid = {
       ...exampleCredential,
@@ -98,7 +100,7 @@ describe('VerifiableCredential Tests', () => {
         id: 'invalid',
         notEmailAddress: 'john.smith@example.com',
         notAlumniOf: 'Example Invalid',
-      }
+      },
     };
 
     await expect(
@@ -193,24 +195,26 @@ describe('Validate Credential Schema utility', () => {
   schema.setJSONSchema(exampleAlumniSchema);
   schema.setAuthor(exampleAuthor);
 
+  const validator = new Validator();
+
   test('credentialSubject has same fields and fields have same types as JSON-schema', () => {
-    expect(validateCredentialSchema(exampleCredential, schema)).toBeDefined();
+    expect(() => validateCredSchemaWithGivenValidator(validator, exampleCredential, schema)).not.toThrow();
   });
 
   test('credentialSubject has same fields but fields have different type than JSON-schema', () => {
-    expect(() => validateCredentialSchema({
+    expect(() => validateCredSchemaWithGivenValidator(validator, {
       credentialSubject: {
         invalid: true,
       },
-    }, schema)).toThrow();
+    }, schema.schema)).toThrow();
   });
 
   test('credentialSubject is missing required fields from the JSON-schema and it should fail to validate.', () => {
     const credentialSubject = { ...exampleCredential.credentialSubject };
     delete credentialSubject.alumniOf;
-    expect(() => validateCredentialSchema({
+    expect(() => validateCredSchemaWithGivenValidator(validator, {
       credentialSubject,
-    }, schema)).toThrow();
+    }, schema.schema)).toThrow();
   });
 
   test('The schema\'s properties is missing the required key and credentialSubject can omit some of the properties.', async () => {
@@ -221,17 +225,17 @@ describe('Validate Credential Schema utility', () => {
     const credentialSubject = { ...exampleCredential.credentialSubject };
     delete credentialSubject.alumniOf;
 
-    expect(validateCredentialSchema({
+    expect(() => validateCredSchemaWithGivenValidator(validator, {
       credentialSubject,
-    }, schema)).toBeDefined();
+    }, schema)).not.toThrow();
   });
 
   test('credentialSubject has extra fields than given schema specifies and additionalProperties is false.', () => {
     const credentialSubject = { ...exampleCredential.credentialSubject };
     credentialSubject.additionalProperty = true;
-    expect(() => validateCredentialSchema({
+    expect(() => validateCredSchemaWithGivenValidator(validator, {
       credentialSubject,
-    }, schema)).toThrow();
+    }, schema.schema)).toThrow();
   });
 
   test('credentialSubject has extra fields than given schema specifies and additionalProperties is true.', async () => {
@@ -243,9 +247,9 @@ describe('Validate Credential Schema utility', () => {
       additionalProperties: true,
     });
 
-    expect(validateCredentialSchema({
+    expect(() => validateCredSchemaWithGivenValidator(validator, {
       credentialSubject,
-    }, schema)).toBeDefined();
+    }, schema)).not.toThrow();
   });
 
   test('credentialSubject has extra fields than given schema specifies and additionalProperties has certain type.', async () => {
@@ -257,9 +261,9 @@ describe('Validate Credential Schema utility', () => {
       additionalProperties: { type: 'string' },
     });
 
-    expect(validateCredentialSchema({
+    expect(() => validateCredSchemaWithGivenValidator(validator, {
       credentialSubject,
-    }, schema)).toBeDefined();
+    }, schema)).not.toThrow();
   });
 
   test('credentialSubject has nested fields and given schema specifies the nested structure.', async () => {
@@ -282,8 +286,8 @@ describe('Validate Credential Schema utility', () => {
       },
     });
 
-    expect(validateCredentialSchema({
+    expect(() => validateCredSchemaWithGivenValidator(validator, {
       credentialSubject,
-    }, schema)).toBeDefined();
+    }, schema)).not.toThrow();
   });
 });

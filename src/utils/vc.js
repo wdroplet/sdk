@@ -1,16 +1,17 @@
 import vcjs from 'vc-js';
 import { blake2AsHex } from '@polkadot/util-crypto';
-import { validate } from 'jsonschema';
+import { Validator } from 'jsonschema';
 
 import documentLoader from './vc/document-loader';
 import { isHexWithGivenByteSize } from './codec';
 import { RevEntryByteSize, RevRegIdByteSize } from './revocation';
-import Schema from '../modules/schema';
+import Schema, {BlobQualifier} from '../modules/schema';
 import {
   EcdsaSecp256k1VerKeyName, Ed25519VerKeyName, Sr25519VerKeyName, EcdsaSepc256k1Signature2019, Ed25519Signature2018, Sr25519Signature2020,
 } from './vc/custom_crypto';
 
-import DIDResolver from '../did-resolver'; // eslint-disable-line
+import DIDResolver from '../did-resolver';
+import {fetchJSONFromUrl} from './misc'; // eslint-disable-line
 /**
  * @typedef {object} VerifiablePresentation Representation of a Verifiable Presentation.
  */
@@ -145,21 +146,21 @@ export async function issueCredential(keyDoc, credential, compactProof = true) {
  * credential is valid and not revoked and false otherwise. The `error` will describe the error if any.
  */
 
-export async function verifyCredential(credential, resolver = null, compactProof = true, forceRevocationCheck = true, revocationAPI = null) {
+export async function verifyCredential(credential, resolver = null, compactProof = true, forceRevocationCheck = true, revocationAPI = null, schemaAPI = null) {
   // TODO: Check schema
   // The method will check that the `credentialSubject` is consistent with `credentialSchema`
   // if `credentialSchema` if `credentialSchema` is present. Uses `validateSchema`.
-  if (credential.credentialSubject && credential.credentialSchema) {
+  if (credential.credentialSubject && credential.credentialSchema && credential.credentialSchema.id) {
     console.log('credential.credentialSubject', credential.credentialSubject);
     console.log('credential.credentialSchema', credential.credentialSchema);
 
     // TODO: need to fetch schema def from did using id
     // credential.credentialSchema
     // { id, name, version }
-
     try {
       // TODO: needs proper schema definition
-      // validateCredentialSchema(credential, credential.credentialSchema);
+      // const schema = await Schema.resolveSchema(credential.credentialSchema.id, schemaAPI);
+      // validateCredentialSchema(credential, schema);
     } catch (e) {
       throw new Error(`Subject is incompatible with schema ${e}`);
     }
@@ -318,23 +319,37 @@ export function buildDockCredentialStatus(registryId) {
   return { id: `${DockRevRegQualifier}${registryId}`, type: RevRegType };
 }
 
-
 /**
  * The function uses `jsonschema` package to verify that the `credential`'s subject `credentialSubject` has the JSON
  * schema `schema`
  * @param {object} credential - The credential to use
  * @param {object} schema - The schema to use
- * @returns {Boolean} - Returns promise to an object or throws error
+ * @param {object} schemaAPI - The schema APIs to talk to different chains
+ * @returns {Boolean} - Throws error
  */
-export function validateCredentialSchema(credential, schema) {
+export async function validateCredentialSchema(credential, schema, schemaAPI) {
+  const validator = new Validator();
+  const schemaObj = schema.schema || schema;
+  await Schema.updateSchemaValidatorWithSchemas(validator, schemaObj, schemaAPI);
+  validateCredSchemaWithGivenValidator(validator, credential, schemaObj);
+}
+
+/**
+ * Takes a JSON schema validator instance and verifies that the `credential`'s subject `credentialSubject` has the JSON
+ * schema `schema`. The given validator instance might be initialized with schemas that are referenced in the given
+ * schema.
+ * @param validator
+ * @param credential
+ * @param schema
+ * @returns {Promise<void>}
+ */
+export function validateCredSchemaWithGivenValidator(validator, credential, schema) {
   const subjects = credential.credentialSubject.length ? credential.credentialSubject : [credential.credentialSubject];
   for (let i = 0; i < subjects.length; i++) {
-    const subject = {...subjects[i]};
+    const subject = { ...subjects[i] };
     delete subject.id; // The id will not be part of schema. The spec mentioned that id will be popped off from subject
-    validate(subject, schema.schema || schema, {
+    validator.validate(subject, schema, {
       throwError: true,
     });
   }
-
-  return true;
 }

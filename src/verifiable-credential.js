@@ -48,7 +48,7 @@ class VerifiableCredential {
   setSchema(id, type) {
     ensureURI(id);
     this.credentialSchema = {
-      id, type
+      id, type,
     };
   }
 
@@ -59,12 +59,12 @@ class VerifiableCredential {
    * @param {object} schema - The schema to validate with
    * @returns {Boolean}
    */
-  validateSchema(schema) {
+  async validateSchema(schema, schemaAPI) {
     if (!this.credentialSubject) {
       throw new Error('No credential subject defined');
     }
 
-    return validateCredentialSchema(this, schema);
+    return validateCredentialSchema(this, schema, schemaAPI);
   }
 
   /**
