@@ -10,13 +10,13 @@ export default {
   },
   properties: {
     // TODO: Change the id once blob integration is done in SDK
-    firstName: { $ref: '/blob:dock:0x123/firstName' },
-    firstInitial: { $ref: '/blob:dock:0x123/firstInitial' },
-    lastName: { $ref: '/blob:dock:0x123/lastName' },
-    lastInitial: { $ref: '/blob:dock:0x123/lastInitial' },
-    yearOfBirth: { $ref: '/blob:dock:0x123/yearOfBirth' },
-    photo: { $ref: '/blob:dock:0x123/photo' },
-    biometricTemplate: { $ref: '/blob:dock:0x123/biometricTemplate' },
+    firstName: { $ref: '/blob:dock:5D/firstName' },
+    firstInitial: { $ref: '/blob:dock:5D/firstInitial' },
+    lastName: { $ref: '/blob:dock:5D/lastName' },
+    lastInitial: { $ref: '/blob:dock:5D/lastInitial' },
+    yearOfBirth: { $ref: '/blob:dock:5D/yearOfBirth' },
+    photo: { $ref: '/blob:dock:5D/photo' },
+    biometricTemplate: { $ref: '/blob:dock:5D/biometricTemplate' },
     eventType: {
       type: 'string',
       enum: ['vaccination', 'antibody test'],

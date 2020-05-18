@@ -1,7 +1,7 @@
 export default {
   $schema: 'http://json-schema.org/draft-07/schema#',
   // TODO: Use a proper id once blob integration is done in SDK
-  id: 'blob:dock:0x123',
+  id: 'blob:dock:5D',
   description: 'Common fields of proof of health schemas',
   type: 'object',
   $defs: {

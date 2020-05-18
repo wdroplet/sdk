@@ -1,4 +1,5 @@
 import { Validator } from 'jsonschema';
+import {scan} from 'jsonschema/lib/scan';
 
 import Schema from '../src/modules/schema';
 import { validateCredentialSchema, validateCredSchemaWithGivenValidator } from '../src/utils/vc';
@@ -279,32 +280,46 @@ const noInfectionCred = {
 };
 
 async function main() {
+  const v = new Validator();
+  const s1 = scan('/', proofOfHealthCoreSchema);
+  console.log(s1.ref);
+  const s2 = scan('/', infectionDiagnosisSchema);
+  // console.log(s2.ref);
+
   await Schema.validateSchema(bolSchema);
   await validateCredentialSchema(bolCred, bolSchema);
+  console.log('Validated credential for bill of landing schema');
 
   await Schema.validateSchema(prCardSchema);
   await validateCredentialSchema(credPRCard, prCardSchema);
+  console.log('Validated credential for PR card schema');
 
   await Schema.validateSchema(qpInbonSchema);
   await validateCredentialSchema(qPInbondCred, qpInbonSchema);
+  console.log('Validated credential for QP Inbond schema');
 
   await Schema.validateSchema(healthWorkerPassportSchema);
   await validateCredentialSchema(healthCareWorkerCred, healthWorkerPassportSchema);
+  console.log('Validated credential for health care worker passport schema');
 
   await Schema.validateSchema(proofOfHealthCoreSchema);
   await validateCredentialSchema(proofOfHealthCoreCred, proofOfHealthCoreSchema);
+  console.log('Validated credential for core fields of proof of health schema');
 
   const validator = new Validator();
-  validator.addSchema(proofOfHealthCoreSchema, 'blob:dock:0x123');
+  validator.addSchema(proofOfHealthCoreSchema, 'blob:dock:5D');
 
   await Schema.validateSchema(infectionDiagnosisSchema);
   validateCredSchemaWithGivenValidator(validator, infectionDiagnosisCred, infectionDiagnosisSchema);
+  console.log('Validated credential for infection diagnosis schema');
 
-  // await Schema.validateSchema(immunityEventRecordSchema);
-  // validateCredSchemaWithGivenValidator(validator, immunityEventRecordCred, immunityEventRecordSchema);
-  //
-  // await Schema.validateSchema(noInfectionSchema);
-  // validateCredSchemaWithGivenValidator(validator, noInfectionCred, noInfectionSchema);
+  await Schema.validateSchema(immunityEventRecordSchema);
+  validateCredSchemaWithGivenValidator(validator, immunityEventRecordCred, immunityEventRecordSchema);
+  console.log('Validated credential for immunity event record schema');
+
+  await Schema.validateSchema(noInfectionSchema);
+  validateCredSchemaWithGivenValidator(validator, noInfectionCred, noInfectionSchema);
+  console.log('Validated credential for no infection schema');
 }
 
 main().catch((error) => {

@@ -9,7 +9,6 @@ export default {
     },
   },
   properties: {
-    id: { $ref: '#/$defs/uri' },
     type: {
       type: 'array',
       items: { type: 'string' },
@@ -42,6 +41,6 @@ export default {
       format: 'date',
     },
   },
-  required: ['id', 'type', 'givenName', 'familyName', 'gender', 'image', 'lprCategory',
+  required: ['type', 'givenName', 'familyName', 'gender', 'image', 'lprCategory',
     'commuterClassification', 'lprNumber', 'residentSince', 'birthDate'],
 };

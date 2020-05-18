@@ -186,12 +186,24 @@ export default class Schema {
    */
   static async updateSchemaValidatorWithSchemas(validator, initialSchema, schemaAPI) {
     validator.addSchema(initialSchema);
+    const initialSchemaId = initialSchema.id || '/';
+    console.log('initialSchemaId', initialSchemaId);
     async function importNextSchema() {
-      const nextSchemaId = validator.unresolvedRefs.shift();
-      console.log('next nextSchemaId', nextSchemaId);
+      let nextSchemaId = validator.unresolvedRefs.shift();
+      console.log('nextSchemaId', nextSchemaId);
       if (!nextSchemaId) { return; }
-      const nextSchema = await Schema.resolveSchema(nextSchemaId, schemaAPI);
-      validator.addSchema(nextSchema);
+      // TODO: Clean this up.
+      // JSON schema assumes the URI is http(s) and would only contain one colon (':') in the protocol.
+      // Getting around that by converting an id like 'blob:dock/:' to 'blob:dock:'
+      if (nextSchemaId.startsWith('blob:dock/:')) {
+        nextSchemaId = nextSchemaId.slice('blob:dock/:'.length);
+        nextSchemaId = BlobQualifier + nextSchemaId;
+      }
+
+      if (!nextSchemaId.startsWith(`${initialSchemaId}#/$defs`)) {
+        const nextSchema = await Schema.resolveSchema(nextSchemaId, schemaAPI);
+        validator.addSchema(nextSchema);
+      }
       await importNextSchema();
     }
     await importNextSchema();
